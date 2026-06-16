@@ -31,7 +31,7 @@ function spotifyTrackId(url) {
 export default function MusicHostPanel({ activity }) {
   const canPlayInApp = activity?.spotifyConnectionId != null;
   // The hook no-ops when connectionId is null, so it's safe to call unconditionally.
-  const { ready, error: playerError, play, pause, resume } = useSpotifyPlayer(activity?.spotifyConnectionId || null);
+  const { ready, error: playerError, play, pause, resume, activate } = useSpotifyPlayer(activity?.spotifyConnectionId || null);
 
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,6 +102,9 @@ export default function MusicHostPanel({ activity }) {
   }, []);
 
   async function start(t) {
+    // Unlock audio WITHIN this click gesture before any await (browser autoplay
+    // policy) — otherwise the later play() returns 204 but no sound comes out.
+    if (canPlayInApp) activate();
     setBusy(true);
     setError(null);
     try {
@@ -130,6 +133,7 @@ export default function MusicHostPanel({ activity }) {
       setPaused(false);
       return;
     }
+    activate(); // unlock audio within the click gesture (autoplay policy)
     setPlayBusy(true);
     setPlayError(null);
     try {
