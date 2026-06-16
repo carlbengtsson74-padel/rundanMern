@@ -231,7 +231,10 @@ export default function MusicHostPanel({ activity }) {
                   {isLive ? 'Starta om' : 'Starta'}
                 </button>
                 {t.spotifyUrl && t.spotifyUrl.trim() ? (
-                  <button type="button" className="btn sm" onClick={() => playTrack(t)} disabled={playBusy}>▶ Spela</button>
+                  <>
+                    <button type="button" className="btn sm" onClick={() => playTrack(t)} disabled={playBusy}>▶ Spela</button>
+                    <a className="btn sm ghost" href={t.spotifyUrl} target="_blank" rel="noopener noreferrer">Spotify ↗</a>
+                  </>
                 ) : null}
               </div>
               <div className="muted" style={{ fontSize: '.82rem' }}>
