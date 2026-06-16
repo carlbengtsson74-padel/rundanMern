@@ -22,6 +22,12 @@ const maybeFinishMusic = (activityId) =>
 
 const secondsSince = (start) => Math.floor((Date.now() - start) / 1000);
 
+function spotifyTrackId(url) {
+  if (!url) return null;
+  const m = url.match(/track[:/]([A-Za-z0-9]+)/);
+  return m ? m[1] : null;
+}
+
 export default function MusicHostPanel({ activity }) {
   const canPlayInApp = activity?.spotifyConnectionId != null;
   // The hook no-ops when connectionId is null, so it's safe to call unconditionally.
@@ -120,7 +126,8 @@ export default function MusicHostPanel({ activity }) {
   async function playTrack(t) {
     if (!(t.spotifyUrl && t.spotifyUrl.trim())) return;
     if (!canPlayInApp) {
-      window.open(t.spotifyUrl, '_blank', 'noopener,noreferrer');
+      setPlayingId(t.id);
+      setPaused(false);
       return;
     }
     setPlayBusy(true);
@@ -182,11 +189,34 @@ export default function MusicHostPanel({ activity }) {
       {error ? <div className="error-text">{error}</div> : null}
       {(playError || playerError) ? <div className="error-text">{playError || playerError}</div> : null}
 
-      {canPlayInApp && playingId != null ? (
-        <div className="row" style={{ gap: '.5rem', alignItems: 'center', background: 'var(--accent-soft, #f3f0ea)', borderRadius: 10, padding: '.4rem .6rem' }}>
-          <span className="grow"><b>♪ Spelar</b> {playingLabel}</span>
-          <button type="button" className="btn sm" onClick={togglePause} disabled={playBusy}>{paused ? '▶ Återuppta' : '⏸ Pausa'}</button>
-        </div>
+      {playingId != null ? (
+        canPlayInApp ? (
+          <div className="row" style={{ gap: '.5rem', alignItems: 'center', background: 'var(--accent-soft, #f3f0ea)', borderRadius: 10, padding: '.4rem .6rem' }}>
+            <span className="grow"><b>♪ Spelar</b> {playingLabel}</span>
+            <button type="button" className="btn sm" onClick={togglePause} disabled={playBusy}>{paused ? '▶ Återuppta' : '⏸ Pausa'}</button>
+          </div>
+        ) : (() => {
+          const tid = spotifyTrackId((tracks.find((t) => t.id === playingId) || {}).spotifyUrl);
+          return tid ? (
+            <div>
+              <div className="row" style={{ gap: '.5rem', alignItems: 'center', marginBottom: '.3rem' }}>
+                <span className="grow"><b>♪ Spelar</b> {playingLabel}</span>
+                <button type="button" className="btn sm ghost" onClick={() => setPlayingId(null)}>✕ Stäng</button>
+              </div>
+              <div style={{ borderRadius: 12, overflow: 'hidden' }}>
+                <iframe
+                  src={`https://open.spotify.com/embed/track/${tid}?utm_source=generator&theme=0`}
+                  width="100%"
+                  height="152"
+                  frameBorder="0"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  loading="lazy"
+                  style={{ display: 'block' }}
+                />
+              </div>
+            </div>
+          ) : null;
+        })()
       ) : null}
 
       <ul style={listStyle}>
