@@ -30,7 +30,7 @@ const maybeFinishMusic = (activityId) =>
 
 const secondsSince = (start) => Math.floor((Date.now() - start) / 1000);
 
-export default function MusicHostPanel({ activity, participant, player = null }) {
+export default function MusicHostPanel({ activity, participant, player = null, onTrackStart }) {
   const canPlayInApp = activity?.spotifyConnectionId != null;
   // The host competes too when they have a player session, it's tap-the-artist mode,
   // and the quiz is actually live (the options + answering only exist while live).
@@ -158,6 +158,7 @@ export default function MusicHostPanel({ activity, participant, player = null })
         window: res?.windowSeconds || 30,
       });
       ensureTicking();
+      onTrackStart?.(); // let the arcade dock collapse so the alternatives show
       if (competing) loadChoices(); // options become available once a track is live
       if (autoPlay && t.spotifyUrl && t.spotifyUrl.trim()) {
         playTrack(t);
@@ -187,6 +188,7 @@ export default function MusicHostPanel({ activity, participant, player = null })
       if (ok) {
         setPlayingId(t.id);
         setPaused(false);
+        onTrackStart?.(); // collapse the arcade dock once playback actually starts
       } else {
         setPlayError('Spotify ville inte starta det spåret. Prova ”Spotify ↗”-länken.');
       }
